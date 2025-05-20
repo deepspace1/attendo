@@ -3,54 +3,54 @@ const Student = require('../models/Student');
 
 // Create new attendance session
 exports.createAttendanceSession = async (req, res) => {
-    try {
-        const { class: className, subject, teacher, records, date } = req.body;
+  try {
+    const { class: className, subject, teacher, records, date } = req.body;
 
-        // Check if records were provided from the frontend
-        let attendanceRecords;
+    // Check if records were provided from the frontend
+    let attendanceRecords;
 
-        if (records && Array.isArray(records)) {
-            // Use the records provided by the frontend
-            console.log('Using attendance records from frontend:', records.length);
-            attendanceRecords = records;
-        } else {
-            // Fallback: Get all students in the class and mark them absent
-            console.log('No records provided, creating default records');
-            const students = await Student.find({ class: className });
-            attendanceRecords = students.map(student => ({
-                student: student._id,
-                status: 'absent'
-            }));
-        }
-
-        // Create a date object with time set to midnight (00:00:00)
-        let attendanceDate;
-        if (date) {
-            // If date is provided in the request, use it
-            attendanceDate = new Date(date);
-        } else {
-            // Otherwise use current date
-            attendanceDate = new Date();
-        }
-        // Set time to midnight to ensure consistent date comparison
-        attendanceDate.setUTCHours(0, 0, 0, 0);
-
-        console.log('Creating attendance record with date:', attendanceDate.toISOString());
-
-        const attendance = new Attendance({
-            date: attendanceDate,
-            class: className,
-            subject,
-            teacher,
-            records: attendanceRecords
-        });
-
-        const newAttendance = await attendance.save();
-        res.status(201).json(newAttendance);
-    } catch (error) {
-        console.error('Error creating attendance session:', error);
-        res.status(400).json({ message: error.message });
+    if (records && Array.isArray(records)) {
+      // Use the records provided by the frontend
+      console.log('Using attendance records from frontend:', records.length);
+      attendanceRecords = records;
+    } else {
+      // Fallback: Get all students in the class and mark them absent
+      console.log('No records provided, creating default records');
+      const students = await Student.find({ class: className });
+      attendanceRecords = students.map(student => ({
+        student: student._id,
+        status: 'absent'
+      }));
     }
+
+    // Create a date object with time set to midnight (00:00:00)
+    let attendanceDate;
+    if (date) {
+      // If date is provided in the request, use it
+      attendanceDate = new Date(date);
+    } else {
+      // Otherwise use current date
+      attendanceDate = new Date();
+    }
+    // Set time to midnight to ensure consistent date comparison
+    attendanceDate.setUTCHours(0, 0, 0, 0);
+
+    console.log('Creating attendance record with date:', attendanceDate.toISOString());
+
+    const attendance = new Attendance({
+      date: attendanceDate,
+      class: className,
+      subject,
+      teacher,
+      records: attendanceRecords
+    });
+
+    const newAttendance = await attendance.save();
+    res.status(201).json(newAttendance);
+  } catch (error) {
+    console.error('Error creating attendance session:', error);
+    res.status(400).json({ message: error.message });
+  }
 };
 
 // Mark student present
