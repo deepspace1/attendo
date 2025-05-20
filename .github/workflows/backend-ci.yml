@@ -1,0 +1,79 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd backend
+        npm install eslint --save-dev
+        npx eslint . --ext .js || true
+    
+    - name: Test connection to MongoDB
+      run: |
+        cd backend
+        npm run test-connection
+    
+    # Add actual tests when you have them
+    # - name: Run tests
+    #   run: |
+    #     cd backend
+    #     npm test
+
+  deploy:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    # This is a placeholder for your deployment step
+    # Replace with actual deployment to your hosting platform
+    - name: Deploy to production
+      run: |
+        echo "Deploying backend to production..."
+        # Add your deployment commands here
+        # For example, if using Heroku:
+        # - Install Heroku CLI
+        # - Login to Heroku
+        # - Push to Heroku

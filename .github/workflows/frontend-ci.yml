@@ -1,0 +1,79 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd frontend
+        npm run lint || true
+    
+    - name: Build
+      run: |
+        cd frontend
+        npm run build
+    
+    # Add actual tests when you have them
+    # - name: Run tests
+    #   run: |
+    #     cd frontend
+    #     npm test
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: frontend/build
+
+  deploy:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: frontend/build
+    
+    # This is a placeholder for your deployment step
+    # Replace with actual deployment to your hosting platform
+    - name: Deploy to production
+      run: |
+        echo "Deploying frontend to production..."
+        # Add your deployment commands here
+        # For example, if using Netlify:
+        # - Install Netlify CLI
+        # - Login to Netlify
+        # - Deploy to Netlify
