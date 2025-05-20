@@ -56,22 +56,22 @@ This project uses GitHub Actions for continuous integration and deployment.
 ### CI/CD Workflow
 
 #### Backend CI/CD
-- Triggered on push or pull request to the main branch that affects backend code
+- Triggered on push or pull request to the master branch that affects backend code
 - Runs on Ubuntu latest
 - Sets up MongoDB service container
 - Installs dependencies
 - Runs linting
 - Tests MongoDB connection
-- Deploys to production (when merged to main)
+- Deploys to production (when merged to master)
 
 #### Frontend CI/CD
-- Triggered on push or pull request to the main branch that affects frontend code
+- Triggered on push or pull request to the master branch that affects frontend code
 - Runs on Ubuntu latest
 - Installs dependencies
 - Runs linting
 - Builds the application
 - Uploads build artifacts
-- Deploys to production (when merged to main)
+- Deploys to production (when merged to master)
 
 ### Setting Up Deployment
 

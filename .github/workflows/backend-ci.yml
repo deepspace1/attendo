@@ -2,12 +2,12 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
@@ -24,30 +24,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
-    
+
     - name: Install dependencies
       run: |
         cd backend
         npm ci
-    
+
     - name: Run linting
       run: |
         cd backend
         npm install eslint --save-dev
         npx eslint . --ext .js || true
-    
+
     - name: Test connection to MongoDB
       run: |
         cd backend
         npm run test-connection
-    
+
     # Add actual tests when you have them
     # - name: Run tests
     #   run: |
@@ -56,17 +56,17 @@ jobs:
 
   deploy:
     needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-    
+
     # This is a placeholder for your deployment step
     # Replace with actual deployment to your hosting platform
     - name: Deploy to production
