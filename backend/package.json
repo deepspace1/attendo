@@ -11,7 +11,10 @@
     "test-connection": "node scripts/testConnection.js",
     "update-dates": "node scripts/updateDates.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test-workflow": "node scripts/test-workflow.js",
+    "test-attendance": "node scripts/test-attendance.js",
+    "test": "npm run test-workflow && npm run test-attendance"
   },
   "dependencies": {
     "cors": "^2.8.5",

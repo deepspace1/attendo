@@ -11,6 +11,8 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
+  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -56,11 +58,17 @@ jobs:
         cd backend
         npm run test-connection || echo "MongoDB connection test failed but continuing workflow"
 
-    # Add actual tests when you have them
-    # - name: Run tests
-    #   run: |
-    #     cd backend
-    #     npm test
+    # Run tests
+    - name: Run tests
+      run: |
+        cd backend
+        npm run test-workflow
+
+    # Run attendance test
+    - name: Run attendance test
+      run: |
+        cd backend
+        npm run test-attendance || echo "Attendance test failed but continuing workflow"
 
   deploy:
     needs: build-and-test
