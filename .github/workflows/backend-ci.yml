@@ -76,26 +76,3 @@ jobs:
         npm run test-attendance || true
         echo "Attendance test completed - any errors will not block the workflow"
 
-  deploy:
-    needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    # This is a placeholder for your deployment step
-    # Replace with actual deployment to your hosting platform
-    - name: Deploy to production
-      run: |
-        echo "Deploying backend to production..."
-        # Add your deployment commands here
-        # For example, if using Heroku:
-        # - Install Heroku CLI
-        # - Login to Heroku
-        # - Push to Heroku
