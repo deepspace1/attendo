@@ -1,0 +1,31 @@
+{
+  "name": "attendance-system",
+  "version": "1.0.0",
+  "description": "A comprehensive attendance management system with Docker containerization",
+  "main": "index.js",
+  "scripts": {
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker-compose down -v --rmi all",
+    "docker:dev": "docker-compose up --build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "attendance",
+    "management",
+    "system",
+    "react",
+    "nodejs",
+    "mongodb",
+    "docker",
+    "devops"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

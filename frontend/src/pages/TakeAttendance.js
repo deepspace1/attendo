@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Card, Table, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || '';
 
 function TakeAttendance() {
   const [formData, setFormData] = useState({
@@ -13,6 +16,8 @@ function TakeAttendance() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [barcode, setBarcode] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -21,7 +26,7 @@ function TakeAttendance() {
       console.log('Fetching students for class:', formData.class);
       // Fetch students for the specific class - encode the class parameter properly
       const encodedClass = encodeURIComponent(formData.class);
-      const response = await fetch(`http://localhost:5000/api/students?class=${encodedClass}`);
+      const response = await fetch(`${apiBaseUrl}/api/students?class=${encodedClass}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -79,7 +84,7 @@ function TakeAttendance() {
 
       console.log('Submitting attendance with date:', formattedDate);
 
-      const response = await fetch('http://localhost:5000/api/attendance/session', {
+      const response = await fetch(`${apiBaseUrl}/api/attendance/session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,6 +123,36 @@ function TakeAttendance() {
       setError(err.message);
     }
   };
+
+  const handleStartScanner = () => {
+    setShowScanner(true);
+  };
+
+  useEffect(() => {
+    if (showScanner) {
+      const readerElement = document.getElementById('reader');
+      if (readerElement) {
+        const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        scanner.render(
+          async (decodedText) => {
+            try {
+              const res = await fetch(`${apiBaseUrl}/api/students/barcode/${decodedText}`);
+              if (!res.ok) throw new Error('Student not found');
+              const student = await res.json();
+              handleMarkAttendance(student._id);
+              scanner.clear(); // Stop the scanner after a successful scan
+              setShowScanner(false);
+            } catch (err) {
+              alert('Student not found for barcode: ' + decodedText);
+            }
+          },
+          (error) => {
+            console.error('QR Code scanning error:', error);
+          }
+        );
+      }
+    }
+  }, [showScanner]);
 
   return (
     <div>
@@ -244,6 +279,39 @@ function TakeAttendance() {
           </Card.Body>
         </Card>
       )}
+
+      <h3>Scan Student Barcode</h3>
+      <input
+        type="text"
+        placeholder="Scan barcode here"
+        value={barcode}
+        onChange={e => setBarcode(e.target.value)}
+        onKeyDown={async (e) => {
+          if (e.key === 'Enter') {
+            const scannedBarcode = barcode.trim();
+            if (scannedBarcode.length === 0) return;
+            try {
+              const res = await fetch(`${apiBaseUrl}/api/students/barcode/${scannedBarcode}`);
+              if (!res.ok) throw new Error('Student not found');
+              const student = await res.json();
+              handleMarkAttendance(student._id);
+              setBarcode('');
+            } catch (err) {
+              alert('Student not found for barcode: ' + scannedBarcode);
+              setBarcode('');
+            }
+          }
+        }}
+        autoFocus
+      />
+
+      {showScanner && <div id="reader" style={{ width: '100%' }}></div>}
+
+      <div className="mt-3">
+        <Button variant="secondary" onClick={handleStartScanner} disabled={showScanner}>
+          {showScanner ? 'Scanning...' : 'Start Camera Scanner'}
+        </Button>
+      </div>
     </div>
   );
 }

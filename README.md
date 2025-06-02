@@ -48,6 +48,8 @@ A web application for teachers to manage student attendance using barcode scanni
 - Frontend: React.js
 - Database: MongoDB
 - Barcode Scanner: Web-based barcode scanning
+- Containerization: Docker & Docker Compose
+- Web Server: Nginx (for production frontend)
 
 ## CI/CD Pipeline
 
@@ -86,3 +88,59 @@ To complete the CI/CD setup with actual deployment:
    - Add secrets like `MONGODB_URI`, `DEPLOY_KEY`, etc.
 
 3. Update the workflow files with actual deployment commands for your chosen platform.
+
+## Docker Deployment ✅ COMPLETED
+
+This project is **fully containerized** using Docker with production-ready configurations.
+
+### 🚀 Quick Start (One Command)
+
+```bash
+# Run the automated test script
+test-docker.bat
+```
+
+This will build, start, and test your entire application stack!
+
+### 📋 What You Get
+
+- **3 Containers**: Frontend (Nginx), Backend (Node.js), Database (MongoDB)
+- **Production Ready**: Multi-stage builds, health checks, security best practices
+- **Easy Management**: Simple npm scripts for all operations
+- **Data Persistence**: MongoDB data survives container restarts
+- **Automated Testing**: Built-in health checks and connectivity tests
+
+### 🎯 Access Points
+
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:5000
+- **Health Check**: http://localhost:5000/api/health
+
+### 🛠️ Management Commands
+
+```bash
+# Start everything
+npm run docker:up
+
+# View logs
+npm run docker:logs
+
+# Stop everything
+npm run docker:down
+
+# Clean restart
+npm run docker:clean && npm run docker:up
+```
+
+### 📚 Documentation
+
+- **Quick Start**: [DOCKER-QUICKSTART.md](DOCKER-QUICKSTART.md)
+- **Detailed Guide**: [DOCKER.md](DOCKER.md)
+
+### ✅ DevOps Tools Implemented
+
+1. **Git/GitHub** - Version Control
+2. **GitHub Actions** - CI/CD Pipeline
+3. **Docker** - Containerization
+4. **Docker Compose** - Container Orchestration
+5. **Nginx** - Web Server & Reverse Proxy

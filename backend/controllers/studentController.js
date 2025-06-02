@@ -8,7 +8,8 @@ exports.getAllStudents = async (req, res) => {
         
         // If class is provided, filter by class
         if (className) {
-            query = { class: className }; // Exact match instead of regex
+            // Use case-insensitive regex match for class
+            query = { class: { $regex: new RegExp(`^${className}$`, 'i') } };
         }
 
         console.log('Searching with query:', query);
@@ -59,16 +60,26 @@ exports.addStudent = async (req, res) => {
     }
 };
 
-// Find student by barcode
+// Find student by barcode (case-insensitive)
 exports.findByBarcode = async (req, res) => {
     try {
-        const student = await Student.findOne({ barcodeId: req.params.barcodeId });
+        const student = await Student.findOne({
+            barcodeId: { $regex: new RegExp(`^${req.params.barcodeId}$`, 'i') }
+        });
         if (student) {
             res.json(student);
+            return;
+        }
+        // If not found by barcodeId, try by rollNumber (case-insensitive)
+        const studentByRoll = await Student.findOne({
+            rollNumber: { $regex: new RegExp(`^${req.params.barcodeId}$`, 'i') }
+        });
+        if (studentByRoll) {
+            res.json(studentByRoll);
         } else {
             res.status(404).json({ message: 'Student not found' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}; 
+};
