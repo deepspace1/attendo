@@ -78,6 +78,92 @@ function TakeAttendance() {
     }));
   };
 
+  const processScannedBarcode = async (scannedBarcode) => {
+    if (!sessionStarted) {
+      setError('Please start an attendance session first');
+      setBarcode('');
+      return;
+    }
+
+    if (!scannedBarcode || scannedBarcode.length === 0) {
+      setBarcode('');
+      return;
+    }
+
+    try {
+      setError(''); // Clear previous errors
+
+      // Fetch student by barcode
+      const res = await fetch(`${apiBaseUrl}/api/students/barcode/${scannedBarcode}`);
+      if (!res.ok) {
+        throw new Error('Student not found');
+      }
+
+      const student = await res.json();
+
+      // Check if student belongs to current class
+      const studentInClass = students.find(s => s._id === student._id);
+      if (!studentInClass) {
+        setError(`Student ${student.name} is not in class ${formData.class}`);
+        setBarcode('');
+        return;
+      }
+
+      // Toggle attendance status (present ↔ absent)
+      const currentStatus = attendanceData[student._id];
+      const newStatus = currentStatus === 'present' ? 'absent' : 'present';
+
+      setAttendanceData(prev => ({
+        ...prev,
+        [student._id]: newStatus
+      }));
+
+      // Add to scanned students list
+      setScannedStudents(prev => {
+        const newList = [...prev];
+        const existingIndex = newList.findIndex(s => s._id === student._id);
+        if (existingIndex >= 0) {
+          newList[existingIndex] = { ...studentInClass, timestamp: new Date(), status: newStatus };
+        } else {
+          newList.unshift({ ...studentInClass, timestamp: new Date(), status: newStatus });
+        }
+        return newList.slice(0, 10); // Keep only last 10 scanned students
+      });
+
+      // Show success message
+      setLastScannedStudent({
+        ...studentInClass,
+        status: newStatus
+      });
+      setSuccess(`✅ ${student.name} marked as ${newStatus.toUpperCase()}`);
+
+      // Clear success message after 2 seconds
+      setTimeout(() => {
+        setSuccess('');
+        setLastScannedStudent(null);
+      }, 2000);
+
+    } catch (err) {
+      setError(`❌ Student not found for barcode: ${scannedBarcode}`);
+
+      // Clear error after 3 seconds
+      setTimeout(() => {
+        setError('');
+      }, 3000);
+    } finally {
+      // Always clear the barcode input for next scan
+      setBarcode('');
+
+      // Refocus the input field for continuous scanning
+      setTimeout(() => {
+        const input = document.querySelector('input[placeholder*="Focus here for scanner"]');
+        if (input) {
+          input.focus();
+        }
+      }, 100);
+    }
+  };
+
   const handleScannedStudent = (student) => {
     // Check if session is started
     if (!sessionStarted) {
@@ -315,8 +401,8 @@ function TakeAttendance() {
       )}
 
       {lastScannedStudent && (
-        <Alert variant="success" className="mb-4">
-          <strong>✅ Scanned:</strong> {lastScannedStudent.name} ({lastScannedStudent.rollNumber}) - Marked Present
+        <Alert variant={lastScannedStudent.status === 'present' ? 'success' : 'warning'} className="mb-4">
+          <strong>{lastScannedStudent.status === 'present' ? '✅' : '❌'} Scanned:</strong> {lastScannedStudent.name} ({lastScannedStudent.rollNumber}) - Marked {lastScannedStudent.status?.toUpperCase() || 'PRESENT'}
         </Alert>
       )}
 
@@ -328,8 +414,11 @@ function TakeAttendance() {
                 <Card.Title>📱 Recent Barcode Scans</Card.Title>
                 <div className="d-flex flex-wrap gap-2">
                   {scannedStudents.slice(0, 5).map((student, index) => (
-                    <span key={`${student._id}-${index}`} className="badge bg-success fs-6">
-                      {student.name} ({student.rollNumber})
+                    <span
+                      key={`${student._id}-${index}`}
+                      className={`badge ${student.status === 'present' ? 'bg-success' : 'bg-warning'} fs-6`}
+                    >
+                      {student.status === 'present' ? '✅' : '❌'} {student.name} ({student.rollNumber})
                     </span>
                   ))}
                 </div>
@@ -399,30 +488,61 @@ function TakeAttendance() {
         </>
       )}
 
-      <h3>Scan Student Barcode</h3>
-      <input
-        type="text"
-        placeholder="Scan barcode here"
-        value={barcode}
-        onChange={e => setBarcode(e.target.value)}
-        onKeyDown={async (e) => {
-          if (e.key === 'Enter') {
-            const scannedBarcode = barcode.trim();
-            if (scannedBarcode.length === 0) return;
-            try {
-              const res = await fetch(`${apiBaseUrl}/api/students/barcode/${scannedBarcode}`);
-              if (!res.ok) throw new Error('Student not found');
-              const student = await res.json();
-              handleMarkAttendance(student._id);
-              setBarcode('');
-            } catch (err) {
-              alert('Student not found for barcode: ' + scannedBarcode);
-              setBarcode('');
-            }
-          }
-        }}
-        autoFocus
-      />
+      <Card className="mb-4">
+        <Card.Body>
+          <Card.Title>📱 Third-Party Scanner Input</Card.Title>
+          <p className="text-muted">
+            This field automatically processes scanned barcodes from your third-party scanner service.
+            The scanner should send the student ID to this input field.
+          </p>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Barcode Scanner Input</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Focus here for scanner input..."
+              value={barcode}
+              onChange={async (e) => {
+                const scannedValue = e.target.value;
+                setBarcode(scannedValue);
+
+                // Auto-process when barcode is complete (you can adjust the length)
+                if (scannedValue.length >= 6) { // Adjust this based on your barcode length
+                  await processScannedBarcode(scannedValue);
+                }
+              }}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const scannedBarcode = barcode.trim();
+                  if (scannedBarcode.length === 0) return;
+                  await processScannedBarcode(scannedBarcode);
+                }
+              }}
+              onBlur={async () => {
+                // Process when field loses focus (in case scanner doesn't trigger onChange)
+                if (barcode.trim().length > 0) {
+                  await processScannedBarcode(barcode.trim());
+                }
+              }}
+              autoFocus
+              style={{
+                fontSize: '18px',
+                padding: '12px',
+                border: '3px solid #007bff',
+                borderRadius: '8px',
+                backgroundColor: '#f8f9fa'
+              }}
+            />
+          </Form.Group>
+
+          <div className="d-flex gap-2 align-items-center">
+            <span className="badge bg-info">Status:</span>
+            <span className={`badge ${sessionStarted ? 'bg-success' : 'bg-warning'}`}>
+              {sessionStarted ? 'Ready for scanning' : 'Start session first'}
+            </span>
+          </div>
+        </Card.Body>
+      </Card>
 
       {showScanner && <div id="reader" style={{ width: '100%' }}></div>}
 
