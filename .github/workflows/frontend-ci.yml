@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
@@ -79,12 +79,13 @@ jobs:
           echo "build_exists=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Upload build artifacts
-      if: steps.check_build.outputs.build_exists == 'true'
-      uses: actions/upload-artifact@v3
-      with:
-        name: build
-        path: frontend/build
+    # Upload artifacts step removed due to GitHub Actions download issues
+    # - name: Upload build artifacts
+    #   if: steps.check_build.outputs.build_exists == 'true'
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: build
+    #     path: frontend/build
 
     - name: Report build status
       if: steps.check_build.outputs.build_exists == 'false'
@@ -96,14 +97,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Download build artifacts
-      continue-on-error: true
-      uses: actions/download-artifact@v3
-      with:
-        name: build
-        path: frontend/build
+    # Download artifacts step removed due to GitHub Actions issues
+    # - name: Download build artifacts
+    #   continue-on-error: true
+    #   uses: actions/download-artifact@v4
+    #   with:
+    #     name: build
+    #     path: frontend/build
 
     - name: Check if build was downloaded
       id: check_build_deploy
