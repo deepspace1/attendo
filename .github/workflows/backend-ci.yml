@@ -134,16 +134,51 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-  # Azure Deployment Job (placeholder for now)
+  # Azure Deployment Job
   deploy-to-azure:
     needs: docker-build-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
-    - name: Deploy to Azure Container Instances
+    - uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy Backend to Azure Container Instances
+      uses: azure/aci-deploy@v1
+      with:
+        resource-group: attendoo-rg
+        dns-name-label: attendoo-backend-${{ github.run_number }}
+        image: kumarharsh001/attendoo:backend-${{ github.sha }}
+        name: attendoo-backend
+        location: 'East US'
+        environment-variables: |
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          PORT=5000
+          NODE_ENV=production
+        ports: 5000
+        cpu: 1
+        memory: 1.5
+
+    - name: Deploy Frontend to Azure Container Instances
+      uses: azure/aci-deploy@v1
+      with:
+        resource-group: attendoo-rg
+        dns-name-label: attendoo-frontend-${{ github.run_number }}
+        image: kumarharsh001/attendoo:frontend-${{ github.sha }}
+        name: attendoo-frontend
+        location: 'East US'
+        ports: 80
+        cpu: 0.5
+        memory: 1
+
+    - name: Get Deployment URLs
       run: |
-        echo "🚀 Ready for Azure deployment!"
-        echo "Backend image: kumarharsh001/attendoo:backend-${{ github.sha }}"
-        echo "Frontend image: kumarharsh001/attendoo:frontend-${{ github.sha }}"
-        echo "Next: Configure Azure CLI and deployment commands"
+        echo "🚀 Deployment Complete!"
+        echo "Backend URL: http://attendoo-backend-${{ github.run_number }}.eastus.azurecontainer.io:5000"
+        echo "Frontend URL: http://attendoo-frontend-${{ github.run_number }}.eastus.azurecontainer.io"
+        echo "Health Check: http://attendoo-backend-${{ github.run_number }}.eastus.azurecontainer.io:5000/api/health"
