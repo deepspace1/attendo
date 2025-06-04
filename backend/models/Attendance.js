@@ -40,4 +40,4 @@ const attendanceSchema = new mongoose.Schema({
 // Add index for faster queries
 attendanceSchema.index({ date: 1, class: 1, subject: 1 });
 
-module.exports = mongoose.model('Attendance', attendanceSchema); 
+module.exports = mongoose.model('Attendance', attendanceSchema, 'attendence');

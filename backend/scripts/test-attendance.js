@@ -16,7 +16,7 @@ const Student = require('../models/Student');
 const Attendance = require('../models/Attendance');
 
 // Use environment variable or default to localhost
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attender';
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attend';
 
 // Test data
 const testStudent = {

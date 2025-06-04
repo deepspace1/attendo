@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Use environment variable or default to localhost
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attender';
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attend';
 
 async function testConnection() {
     try {

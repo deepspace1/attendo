@@ -1,9 +1,15 @@
 import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Link, useLocation } from 'react-router-dom';
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 function Navigation() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login', { replace: true });
+  };
 
   return (
     <Navbar bg="white" expand="lg" className="mb-4">
@@ -35,6 +41,9 @@ function Navigation() {
             >
               View Records
             </Nav.Link>
+            <Button variant="outline-primary" onClick={handleLogout} className="ms-3">
+              Logout
+            </Button>
           </Nav>
         </Navbar.Collapse>
       </Container>
@@ -42,4 +51,4 @@ function Navigation() {
   );
 }
 
-export default Navigation; 
+export default Navigation;

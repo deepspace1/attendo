@@ -18,6 +18,8 @@ function TakeAttendance() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [barcode, setBarcode] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [scannedStudents, setScannedStudents] = useState([]);
+  const [lastScannedStudent, setLastScannedStudent] = useState(null);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -76,6 +78,50 @@ function TakeAttendance() {
     }));
   };
 
+  const handleScannedStudent = (student) => {
+    // Check if session is started
+    if (!sessionStarted) {
+      setError('Please start an attendance session first');
+      return;
+    }
+
+    // Check if student belongs to current class
+    const studentInClass = students.find(s => s._id === student._id || s._id === student.id);
+    if (!studentInClass) {
+      setError(`Student ${student.name} is not in class ${formData.class}`);
+      return;
+    }
+
+    // Use the correct student ID from the database
+    const studentId = studentInClass._id;
+
+    // Mark student as present
+    setAttendanceData(prev => ({
+      ...prev,
+      [studentId]: 'present'
+    }));
+
+    // Add to scanned students list
+    setScannedStudents(prev => {
+      const newList = [...prev];
+      const existingIndex = newList.findIndex(s => s._id === studentId);
+      if (existingIndex >= 0) {
+        newList[existingIndex] = { ...studentInClass, timestamp: new Date() };
+      } else {
+        newList.unshift({ ...studentInClass, timestamp: new Date() });
+      }
+      return newList.slice(0, 10); // Keep only last 10 scanned students
+    });
+
+    setLastScannedStudent(studentInClass);
+    setError(''); // Clear any previous errors
+
+    // Clear the last scanned student after 3 seconds
+    setTimeout(() => {
+      setLastScannedStudent(null);
+    }, 3000);
+  };
+
   const handleSubmitSession = async () => {
     try {
       // Get current date in YYYY-MM-DD format
@@ -127,6 +173,53 @@ function TakeAttendance() {
   const handleStartScanner = () => {
     setShowScanner(true);
   };
+
+  // Listen for barcode scans from native camera page
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const scannedData = localStorage.getItem('scannedStudent');
+      if (scannedData) {
+        try {
+          const { student, timestamp } = JSON.parse(scannedData);
+          // Only process if the scan is recent (within last 5 seconds)
+          if (Date.now() - timestamp < 5000) {
+            handleScannedStudent(student);
+            localStorage.removeItem('scannedStudent'); // Clear after processing
+          }
+        } catch (error) {
+          console.error('Error processing scanned student data:', error);
+        }
+      }
+    };
+
+    // Listen for storage changes (from other tabs/windows)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check on component mount
+    handleStorageChange();
+
+    // Listen for postMessage events (from iframe)
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'BARCODE_SCANNED') {
+        handleScannedStudent(event.data.student);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
+    // Listen for custom events
+    const handleCustomEvent = (event) => {
+      if (event.detail && event.detail.student) {
+        handleScannedStudent(event.detail.student);
+      }
+    };
+    window.addEventListener('studentScanned', handleCustomEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('studentScanned', handleCustomEvent);
+    };
+  }, [sessionStarted, students, formData.class]);
 
   useEffect(() => {
     if (showScanner) {
@@ -221,10 +314,35 @@ function TakeAttendance() {
         </Alert>
       )}
 
+      {lastScannedStudent && (
+        <Alert variant="success" className="mb-4">
+          <strong>✅ Scanned:</strong> {lastScannedStudent.name} ({lastScannedStudent.rollNumber}) - Marked Present
+        </Alert>
+      )}
+
       {sessionStarted && (
-        <Card>
-          <Card.Body>
-            <Card.Title>Mark Attendance</Card.Title>
+        <>
+          {scannedStudents.length > 0 && (
+            <Card className="mb-4">
+              <Card.Body>
+                <Card.Title>📱 Recent Barcode Scans</Card.Title>
+                <div className="d-flex flex-wrap gap-2">
+                  {scannedStudents.slice(0, 5).map((student, index) => (
+                    <span key={`${student._id}-${index}`} className="badge bg-success fs-6">
+                      {student.name} ({student.rollNumber})
+                    </span>
+                  ))}
+                </div>
+                <small className="text-muted">
+                  Open the barcode scanner on your mobile: <strong>http://your-ip/native-camera.html</strong>
+                </small>
+              </Card.Body>
+            </Card>
+          )}
+
+          <Card>
+            <Card.Body>
+              <Card.Title>Mark Attendance</Card.Title>
             {loading ? (
               <div className="text-center py-4">
                 <Spinner animation="border" role="status">
@@ -278,6 +396,7 @@ function TakeAttendance() {
             )}
           </Card.Body>
         </Card>
+        </>
       )}
 
       <h3>Scan Student Barcode</h3>

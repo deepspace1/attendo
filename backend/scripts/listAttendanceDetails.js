@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 const Attendance = require('../models/Attendance');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/attender', {
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attend';
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

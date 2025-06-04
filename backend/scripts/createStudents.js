@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Student = require('../models/Student');
 require('dotenv').config();
+const Student = require('../models/Student');
 
 const students = [
     {
@@ -87,7 +87,8 @@ const students = [
 async function createStudents() {
     try {
         // Connect to MongoDB using 'attender' database
-        await mongoose.connect('mongodb://localhost:27017/attender', {
+        const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attend';
+        await mongoose.connect(mongoURI, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });

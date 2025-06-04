@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const barcodeRoutes = require('./routes/barcodeRoutes');
+const studentsRoutes = require('./routes/students');
 
 const app = express();
 
@@ -9,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/attender';
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/attend';
 
 let isMongoConnected = false;
 
@@ -53,6 +55,8 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api', barcodeRoutes);
+app.use('/api/students', studentsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

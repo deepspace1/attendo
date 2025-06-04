@@ -46,7 +46,7 @@ A web application for teachers to manage student attendance using barcode scanni
 ## Technologies Used
 - Backend: Node.js, Express.js
 - Frontend: React.js
-- Database: MongoDB
+- Database: MongoDB Atlas (Cloud)
 - Barcode Scanner: Web-based barcode scanning
 - Containerization: Docker & Docker Compose
 - Web Server: Nginx (for production frontend)
@@ -57,37 +57,35 @@ This project uses GitHub Actions for continuous integration and deployment.
 
 ### CI/CD Workflow
 
-#### Backend CI/CD
-- Triggered on push or pull request to the master branch that affects backend code
-- Runs on Ubuntu latest
-- Sets up MongoDB service container
-- Installs dependencies
-- Runs linting
-- Tests MongoDB connection
-- Deploys to production (when merged to master)
+#### Backend CI/CD ✅ ENHANCED
+- **Testing**: Automated tests, linting, MongoDB connection validation
+- **Docker Build**: Builds backend Docker image
+- **Docker Push**: Pushes to Docker Hub registry
+- **Azure Deployment**: Ready for Azure Container Instances
+- **Triggered**: On push/PR to master branch
 
-#### Frontend CI/CD
-- Triggered on push or pull request to the master branch that affects frontend code
-- Runs on Ubuntu latest
-- Installs dependencies
-- Runs linting
-- Builds the application
-- Uploads build artifacts
-- Deploys to production (when merged to master)
+#### Frontend CI/CD ✅ ENHANCED
+- **Docker Build**: Builds frontend Docker image with Nginx
+- **Docker Push**: Pushes to Docker Hub registry
+- **Multi-stage Build**: Optimized production builds
+- **Azure Ready**: Configured for Azure deployment
 
-### Setting Up Deployment
+### 🚀 Deployment Workflow
+1. **Code Push** → GitHub Actions triggered
+2. **Run Tests** → Validate code quality and functionality
+3. **Build Docker Images** → Create containerized applications
+4. **Push to Docker Hub** → Store images in registry
+5. **Deploy to Azure** → Automatic deployment to cloud
 
-To complete the CI/CD setup with actual deployment:
+### 🔧 Setup Instructions
 
-1. Choose a hosting platform:
-   - Backend: Heroku, DigitalOcean, AWS, etc.
-   - Frontend: Netlify, Vercel, GitHub Pages, etc.
+**See [DEPLOYMENT-SETUP.md](DEPLOYMENT-SETUP.md) for complete setup guide**
 
-2. Add necessary secrets to your GitHub repository:
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Add secrets like `MONGODB_URI`, `DEPLOY_KEY`, etc.
-
-3. Update the workflow files with actual deployment commands for your chosen platform.
+**Quick Setup:**
+1. **GitHub Secrets**: Add `DOCKER_USERNAME` and `DOCKER_PASSWORD`
+2. **Docker Hub**: Create repository `kumarharsh001/attendoo`
+3. **Push Code**: Trigger automatic build and push
+4. **Azure Setup**: Configure Azure Container Instances (next phase)
 
 ## Docker Deployment ✅ COMPLETED
 

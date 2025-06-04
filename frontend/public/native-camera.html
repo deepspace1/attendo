@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Attendance Barcode Scanner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    #interactive {
+      width: 100%;
+      max-width: 400px;
+      border: 2px solid #007bff;
+      margin: 0 auto 20px;
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #interactive video {
+      width: 100%;
+      display: block;
+    }
+    .button-group {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #startBtn {
+      background-color: #28a745;
+      color: white;
+    }
+    #startBtn:hover {
+      background-color: #218838;
+    }
+    #stopBtn {
+      background-color: #dc3545;
+      color: white;
+    }
+    #stopBtn:hover {
+      background-color: #c82333;
+    }
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+    .status-section {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    #status {
+      margin: 0;
+      font-weight: bold;
+      color: #495057;
+    }
+    .result-section {
+      background-color: #e7f3ff;
+      padding: 15px;
+      border-radius: 5px;
+      border-left: 4px solid #007bff;
+    }
+    #barcodeValue {
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #007bff;
+      word-break: break-all;
+    }
+    .student-info {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+      display: none;
+    }
+    .student-info.show {
+      display: block;
+    }
+    .student-name {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #155724;
+      margin-bottom: 5px;
+    }
+    .student-details {
+      color: #155724;
+    }
+    .error-info {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+      color: #721c24;
+      display: none;
+    }
+    .error-info.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📱 Attendance Barcode Scanner</h2>
+
+    <div id="interactive" class="viewport"></div>
+
+    <div class="button-group">
+      <button id="startBtn">📷 Start Scanning</button>
+      <button id="stopBtn" disabled>⏹️ Stop Scanning</button>
+    </div>
+
+    <div class="status-section">
+      <p id="status">Click "Start Scanning" to begin</p>
+      <div id="scanProgress" style="display: none; margin-top: 10px;">
+        <div style="background-color: #e9ecef; border-radius: 10px; height: 20px; overflow: hidden;">
+          <div id="progressBar" style="background-color: #28a745; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+        <small style="color: #6c757d; margin-top: 5px; display: block;">Hold barcode steady for accurate reading</small>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <p><strong>Detected Barcode:</strong> <span id="barcodeValue">None</span></p>
+    </div>
+
+    <div id="studentInfo" class="student-info">
+      <div class="student-name" id="studentName"></div>
+      <div class="student-details">
+        <p><strong>Roll Number:</strong> <span id="studentRoll"></span></p>
+        <p><strong>Class:</strong> <span id="studentClass"></span></p>
+        <p><strong>Barcode ID:</strong> <span id="studentBarcode"></span></p>
+      </div>
+    </div>
+
+    <div id="errorInfo" class="error-info">
+      <p id="errorMessage"></p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const status = document.getElementById('status');
+    const barcodeValue = document.getElementById('barcodeValue');
+    const studentInfo = document.getElementById('studentInfo');
+    const errorInfo = document.getElementById('errorInfo');
+    const studentName = document.getElementById('studentName');
+    const studentRoll = document.getElementById('studentRoll');
+    const studentClass = document.getElementById('studentClass');
+    const studentBarcode = document.getElementById('studentBarcode');
+    const errorMessage = document.getElementById('errorMessage');
+    const scanProgress = document.getElementById('scanProgress');
+    const progressBar = document.getElementById('progressBar');
+
+    // Variables for scan validation
+    let lastScannedCode = '';
+    let scanCount = 0;
+    let scanConfidenceThreshold = 3; // Require 3 consistent scans
+    let scanTimeout = null;
+
+    function logStatus(message) {
+      console.log(message);
+      status.textContent = message;
+    }
+
+    function showStudentInfo(student) {
+      studentName.textContent = student.name;
+      studentRoll.textContent = student.rollNumber;
+      studentClass.textContent = student.class;
+      studentBarcode.textContent = student.barcodeId || 'Not set';
+
+      studentInfo.classList.add('show');
+      errorInfo.classList.remove('show');
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorInfo.classList.add('show');
+      studentInfo.classList.remove('show');
+    }
+
+    function hideInfoBoxes() {
+      studentInfo.classList.remove('show');
+      errorInfo.classList.remove('show');
+    }
+
+    function resetScanValidation() {
+      lastScannedCode = '';
+      scanCount = 0;
+      scanProgress.style.display = 'none';
+      progressBar.style.width = '0%';
+      if (scanTimeout) {
+        clearTimeout(scanTimeout);
+        scanTimeout = null;
+      }
+    }
+
+    function validateAndProcessScan(code) {
+      // Clean the code (remove any whitespace)
+      const cleanCode = code.trim();
+
+      // Check if this is the same code as before
+      if (cleanCode === lastScannedCode) {
+        scanCount++;
+        const progressPercent = (scanCount / scanConfidenceThreshold) * 100;
+
+        // Show progress
+        scanProgress.style.display = 'block';
+        progressBar.style.width = progressPercent + '%';
+
+        logStatus(`🔍 Validating scan: ${cleanCode} (${scanCount}/${scanConfidenceThreshold})`);
+
+        // If we have enough consistent scans, process it
+        if (scanCount >= scanConfidenceThreshold) {
+          processBarcodeResult(cleanCode);
+          resetScanValidation();
+        }
+      } else {
+        // New code detected, reset counter
+        lastScannedCode = cleanCode;
+        scanCount = 1;
+        const progressPercent = (scanCount / scanConfidenceThreshold) * 100;
+
+        // Show progress
+        scanProgress.style.display = 'block';
+        progressBar.style.width = progressPercent + '%';
+
+        logStatus(`🔍 New barcode detected: ${cleanCode} (${scanCount}/${scanConfidenceThreshold})`);
+
+        // Reset validation after 2 seconds if no more scans
+        if (scanTimeout) clearTimeout(scanTimeout);
+        scanTimeout = setTimeout(() => {
+          resetScanValidation();
+          logStatus('📷 Ready to scan - hold barcode steady for accurate reading');
+        }, 2000);
+      }
+    }
+
+    function processBarcodeResult(code) {
+      barcodeValue.textContent = code;
+      logStatus('✅ Barcode validated: ' + code + ' - Looking up student...');
+
+      // Hide previous results
+      hideInfoBoxes();
+
+      // Send to backend to find student
+      fetch('http://localhost:5000/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scanCode: code }),
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Backend response:', data);
+
+        if (data.success && data.student) {
+          logStatus('✅ Student found successfully!');
+          showStudentInfo(data.student);
+
+          // Send student data to take attendance page
+          sendToTakeAttendance(data.student);
+
+          // Clear the display after 3 seconds and prepare for next scan
+          setTimeout(() => {
+            hideInfoBoxes();
+            barcodeValue.textContent = 'Ready for next scan...';
+            logStatus('📷 Ready to scan next barcode');
+            resetScanValidation();
+          }, 3000);
+
+        } else {
+          logStatus('❌ Student not found');
+          showError(data.message || 'Student not found with this barcode');
+
+          // Clear error after 4 seconds and prepare for next scan
+          setTimeout(() => {
+            hideInfoBoxes();
+            barcodeValue.textContent = 'Ready for next scan...';
+            logStatus('📷 Ready to scan next barcode');
+            resetScanValidation();
+          }, 4000);
+        }
+      })
+      .catch(err => {
+        console.error('Error sending scan code:', err);
+        logStatus('❌ Error connecting to server');
+        showError('Error connecting to server: ' + err.message);
+        resetScanValidation();
+      });
+    }
+
+    function sendToTakeAttendance(student) {
+      try {
+        // Try to communicate with parent window (if opened in iframe)
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'BARCODE_SCANNED',
+            student: student
+          }, '*');
+        }
+
+        // Also try localStorage for communication between tabs
+        localStorage.setItem('scannedStudent', JSON.stringify({
+          student: student,
+          timestamp: Date.now()
+        }));
+
+        // Dispatch custom event
+        window.dispatchEvent(new CustomEvent('studentScanned', {
+          detail: { student: student }
+        }));
+
+        console.log('Student data sent to take attendance page:', student);
+      } catch (error) {
+        console.error('Error sending data to take attendance page:', error);
+      }
+    }
+
+    function startScanner() {
+      if (Quagga.initialized) {
+        Quagga.start();
+        logStatus('Scanning started');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        return;
+      }
+
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#interactive'),
+          constraints: {
+            facingMode: "environment", // Use back camera
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          },
+        },
+        decoder: {
+          readers: [
+            "code_39_reader",
+            "code_39_vin_reader"
+          ],
+          debug: {
+            drawBoundingBox: true,
+            showFrequency: true,
+            drawScanline: true,
+            showPattern: true
+          }
+        },
+        locate: true,
+        locator: {
+          patchSize: "medium",
+          halfSample: false
+        },
+        numOfWorkers: 2,
+        frequency: 10
+      }, function(err) {
+        if (err) {
+          logStatus('Error initializing Quagga: ' + err);
+          return;
+        }
+        Quagga.initialized = true;
+        Quagga.start();
+        logStatus('Scanning started');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      });
+
+      Quagga.onDetected(function(result) {
+        if (result && result.codeResult && result.codeResult.code) {
+          const code = result.codeResult.code;
+
+          // Only process Code 39 barcodes with good quality
+          if (result.codeResult.format === "code_39" && result.codeResult.decodedCodes) {
+            // Check the quality of the scan
+            const avgQuality = result.codeResult.decodedCodes.reduce((sum, code) => sum + (code.error || 0), 0) / result.codeResult.decodedCodes.length;
+
+            // Only accept high-quality scans (lower error is better)
+            if (avgQuality < 0.1) {
+              validateAndProcessScan(code);
+            } else {
+              console.log('Low quality scan rejected, error rate:', avgQuality);
+            }
+          } else {
+            // For non-Code39 or fallback, still validate
+            validateAndProcessScan(code);
+          }
+        }
+      });
+    }
+
+    function stopScanner() {
+      Quagga.stop();
+      resetScanValidation();
+      logStatus('📷 Scanning stopped');
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      barcodeValue.textContent = 'None';
+      hideInfoBoxes();
+    }
+
+    startBtn.addEventListener('click', startScanner);
+    stopBtn.addEventListener('click', stopScanner);
+  </script>
+</body>
+</html>

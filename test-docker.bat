@@ -55,8 +55,7 @@ echo.
 echo Frontend logs:
 docker-compose logs --tail=10 frontend
 echo.
-echo MongoDB logs:
-docker-compose logs --tail=10 mongodb
+echo Note: Using MongoDB Atlas cloud database - no local MongoDB container
 
 echo.
 echo 9. Testing backend health endpoint...

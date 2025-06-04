@@ -87,11 +87,10 @@ docker-compose up -d
 
 When everything is working, you'll have:
 
-1. **MongoDB Container**: Database server
-2. **Backend Container**: Node.js API server
-3. **Frontend Container**: React app served by Nginx
+1. **Backend Container**: Node.js API server (connects to MongoDB Atlas)
+2. **Frontend Container**: React app served by Nginx
 
-All containers are connected via a Docker network and can communicate with each other.
+The backend connects to MongoDB Atlas cloud database, so no local MongoDB container is needed.
 
 ## Success Indicators
 

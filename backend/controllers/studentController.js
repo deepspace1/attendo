@@ -28,7 +28,7 @@ exports.getAllStudents = async (req, res) => {
         console.error('Error in getAllStudents:', error);
         res.status(500).json({ 
             message: error.message,
-            error: error.stack 
+            error: error.stack
         });
     }
 };

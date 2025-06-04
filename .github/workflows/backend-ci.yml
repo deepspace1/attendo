@@ -18,12 +18,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:4.4
-        ports:
-          - 27017:27017
-
     steps:
     - uses: actions/checkout@v3
 
@@ -50,7 +44,7 @@ jobs:
     - name: Create .env file
       run: |
         cd backend
-        echo "MONGODB_URI=mongodb://localhost:27017/attender" > .env
+        echo "MONGODB_URI=mongodb+srv://harshkumar170604:ThisismongoDB1234@cluster0.kezwcrd.mongodb.net/attend?retryWrites=true&w=majority&appName=Cluster0" > .env
         echo "PORT=5000" >> .env
         echo "NODE_ENV=test" >> .env
         cat .env
@@ -76,3 +70,80 @@ jobs:
         npm run test-attendance || true
         echo "Attendance test completed - any errors will not block the workflow"
 
+  # Docker Build and Push Job
+  docker-build-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata for backend
+      id: meta-backend
+      uses: docker/metadata-action@v4
+      with:
+        images: kumarharsh001/attendoo
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=backend-latest,enable={{is_default_branch}}
+
+    - name: Build and push backend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend
+        push: true
+        tags: |
+          kumarharsh001/attendoo:backend-latest
+          kumarharsh001/attendoo:backend-${{ github.sha }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Extract metadata for frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v4
+      with:
+        images: kumarharsh001/attendoo
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=frontend-latest,enable={{is_default_branch}}
+
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./frontend
+        push: true
+        tags: |
+          kumarharsh001/attendoo:frontend-latest
+          kumarharsh001/attendoo:frontend-${{ github.sha }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Azure Deployment Job (placeholder for now)
+  deploy-to-azure:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+    - name: Deploy to Azure Container Instances
+      run: |
+        echo "🚀 Ready for Azure deployment!"
+        echo "Backend image: kumarharsh001/attendoo:backend-${{ github.sha }}"
+        echo "Frontend image: kumarharsh001/attendoo:frontend-${{ github.sha }}"
+        echo "Next: Configure Azure CLI and deployment commands"

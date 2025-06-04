@@ -14,17 +14,22 @@
     "lint:fix": "eslint . --fix",
     "test-workflow": "node scripts/test-workflow.js",
     "test-attendance": "node scripts/test-attendance.js",
-    "test": "npm run test-workflow && npm run test-attendance"
+    "test": "npm run test-workflow && npm run test-attendance",
+    "create-test-students": "node scripts/createTestStudentsWithBarcodes.js"
   },
   "dependencies": {
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "mongoose": "^7.5.0",
     "dotenv": "^16.0.3",
-    "body-parser": "^1.20.2"
+    "express": "^4.18.2",
+    "jimp": "^1.6.0",
+    "mongoose": "^7.5.0",
+    "multer": "^2.0.0",
+    "prom-client": "^15.1.3",
+    "qrcode-reader": "^1.0.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "eslint": "^8.56.0"
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.1"
   }
 }

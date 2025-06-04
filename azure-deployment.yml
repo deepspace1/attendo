@@ -1,0 +1,50 @@
+# Azure Container Instances Deployment Template
+# This will be integrated into the CI/CD pipeline later
+
+apiVersion: 2021-03-01
+location: East US
+name: attendoo-app
+properties:
+  containers:
+  - name: backend
+    properties:
+      image: kumarharsh001/attendoo:backend-latest
+      resources:
+        requests:
+          cpu: 1
+          memoryInGb: 1.5
+      ports:
+      - port: 5000
+        protocol: TCP
+      environmentVariables:
+      - name: MONGODB_URI
+        secureValue: mongodb+srv://harshkumar170604:ThisismongoDB1234@cluster0.kezwcrd.mongodb.net/attend?retryWrites=true&w=majority&appName=Cluster0
+      - name: PORT
+        value: '5000'
+      - name: NODE_ENV
+        value: 'production'
+        
+  - name: frontend
+    properties:
+      image: kumarharsh001/attendoo:frontend-latest
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGb: 1
+      ports:
+      - port: 80
+        protocol: TCP
+        
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    ports:
+    - protocol: TCP
+      port: 5000
+    - protocol: TCP
+      port: 80
+    dnsNameLabel: attendoo-app-unique
+tags:
+  Environment: Production
+  Application: AttendanceSystem
