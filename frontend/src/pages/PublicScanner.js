@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrReader } from 'react-qr-reader';
+import QrScanner from 'react-qr-scanner';
 
 const PublicScanner = () => {
   const [scanResult, setScanResult] = useState('');
@@ -42,7 +42,7 @@ const PublicScanner = () => {
     <div>
       <h2>Public Scanner</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <QrReader
+      <QrScanner
         delay={300}
         onError={handleError}
         onScan={handleScan}
