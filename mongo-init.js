@@ -1,7 +1,4 @@
-// MongoDB initialization script
-// This script runs when the MongoDB container starts for the first time
 
-// Switch to the attender database
 db = db.getSiblingDB('attender');
 
 // Create collections with validation
