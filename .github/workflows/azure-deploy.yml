@@ -93,6 +93,7 @@ jobs:
         location: 'East US'
         environment-variables: |
           REACT_APP_API_BASE_URL=${{ steps.backend-url.outputs.backend_url }}
+          BACKEND_URL=${{ steps.backend-url.outputs.backend_url }}
         ports: 80
         cpu: 0.5
         memory: 1

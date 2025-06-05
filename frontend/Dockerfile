@@ -27,16 +27,20 @@ RUN apk add --no-cache curl
 # Copy built application from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy custom nginx configuration
+# Copy nginx configuration template and static config
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Set default environment variables
+ENV BACKEND_URL=http://localhost:5000
 
 # Expose port 80
 EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost || exit 1
+  CMD curl -f http://localhost/health || exit 1
 
-# Start nginx
+# Start nginx with environment variable substitution
 CMD ["nginx", "-g", "daemon off;"]
 
