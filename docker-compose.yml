@@ -1,43 +1,64 @@
 version: '3.8'
-services:
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "3002:3000"
-  
+services:
   # Backend Service
   backend:
-    build:
-      context: ./backend
-    image: kumarharsh001/attendoo:backend
-    container_name: attendo-backend
-    restart: always
+    image: kumarharsh001/attendoo:backend-latest
+    container_name: attendoo-backend
     environment:
       - MONGODB_URI=mongodb+srv://harshkumar170604:ThisismongoDB1234@cluster0.kezwcrd.mongodb.net/attend?retryWrites=true&w=majority&appName=Cluster0
       - PORT=5000
+      - NODE_ENV=production
     ports:
       - "5000:5000"
+    networks:
+      - attendoo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Frontend Service
   frontend:
-    build:
-      context: ./frontend
-    image: kumarharsh001/attendoo:frontend
-    container_name: attendo-frontend
-    restart: always
+    image: kumarharsh001/attendoo:frontend-latest
+    container_name: attendoo-frontend
     ports:
-      - "3000:80"
+      - "80:80"
+    networks:
+      - attendoo-network
     depends_on:
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-# volumes:
-  # mongo-data: # No longer needed since using MongoDB Atlas
+  # Optional: Monitoring services (commented out for simplicity)
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - attendoo-network
+
+  # grafana:
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   ports:
+  #     - "3002:3000"
+  #   networks:
+  #     - attendoo-network
+
+networks:
+  attendoo-network:
+    driver: bridge
+    name: attendoo-network
