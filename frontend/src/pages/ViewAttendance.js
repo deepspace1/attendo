@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Card, Table, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
 
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || '';
+
 function ViewAttendance() {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [filters, setFilters] = useState({
@@ -24,7 +26,7 @@ function ViewAttendance() {
       }).toString();
       
       console.log('Search Parameters:', filters);
-      const apiUrl = `http://localhost:5000/api/attendance/records?${queryParams}`;
+      const apiUrl = `${apiBaseUrl}/api/attendance/records?${queryParams}`;
       console.log('Query URL:', apiUrl);
       
       const response = await fetch(apiUrl);
@@ -101,7 +103,7 @@ function ViewAttendance() {
   const handleViewDetails = async (recordId) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/attendance/records/${recordId}`);
+      const response = await fetch(`${apiBaseUrl}/api/attendance/records/${recordId}`);
       const data = await response.json();
       
       if (!response.ok) {

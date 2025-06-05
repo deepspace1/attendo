@@ -40,6 +40,7 @@ docker run -d ^
   --name attendoo-frontend ^
   --network attendoo-network ^
   -p 80:80 ^
+  -e REACT_APP_API_BASE_URL=http://backend:5000 ^
   --restart unless-stopped ^
   kumarharsh001/attendoo:frontend-latest
 

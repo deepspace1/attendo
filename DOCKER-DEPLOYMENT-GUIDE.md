@@ -68,11 +68,12 @@ docker run -d \
   -e MONGODB_URI="your-mongodb-uri" \
   kumarharsh001/attendoo:backend-latest
 
-# Start frontend
+# Start frontend with environment variable
 docker run -d \
   --name attendoo-frontend \
   --network attendoo-network \
   -p 80:80 \
+  -e REACT_APP_API_BASE_URL=http://backend:5000 \
   kumarharsh001/attendoo:frontend-latest
 ```
 
@@ -174,6 +175,27 @@ Your simplified CI/CD pipeline builds these images:
 
 The deployment scripts automatically use the latest images from Docker Hub.
 
+## 🔧 Environment Variables
+
+### **Frontend Environment Variables:**
+| Variable | Local Development | Docker Deployment |
+|----------|-------------------|-------------------|
+| `REACT_APP_API_BASE_URL` | `http://localhost:5000` | `http://backend:5000` |
+
+### **Local Development:**
+Create `frontend/.env.local`:
+```ini
+REACT_APP_API_BASE_URL=http://localhost:5000
+```
+
+### **Docker Deployment:**
+Environment variable is automatically set in Docker Compose and run scripts.
+
+### **How It Works:**
+- **Local development**: Frontend connects to `localhost:5000`
+- **Docker containers**: Frontend connects to `backend:5000` (container hostname)
+- **Native camera scanner**: Automatically detects environment and uses correct URL
+
 ## ✅ Ready to Deploy!
 
-Your attendance system is now production-ready with robust error handling and proper Docker networking! 🎉
+Your attendance system is now production-ready with robust error handling, proper Docker networking, and dynamic environment configuration! 🎉

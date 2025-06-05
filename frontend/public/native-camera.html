@@ -271,8 +271,13 @@
       // Hide previous results
       hideInfoBoxes();
 
+      // Get API base URL from environment or use relative path for Docker
+      const apiBaseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:5000'
+        : '';
+
       // Send to backend to find student
-      fetch('http://localhost:5000/api/scan', {
+      fetch(`${apiBaseUrl}/api/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scanCode: code }),
