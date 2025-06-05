@@ -1,16 +1,10 @@
-name: Backend CI/CD
+name: Build and Push Docker Images
 
 on:
   push:
     branches: [ master ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [ master ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
   # Allow manual triggering
   workflow_dispatch:
 
