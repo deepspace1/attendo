@@ -3,6 +3,8 @@ import { Form, Card, Table, Row, Col, Button, Spinner, Alert } from 'react-boots
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || '';
+console.log('🔍 API Base URL:', apiBaseUrl);
+console.log('🔍 All env vars:', process.env);
 
 function TakeAttendance() {
   const [formData, setFormData] = useState({

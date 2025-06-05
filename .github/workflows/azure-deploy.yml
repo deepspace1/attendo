@@ -45,6 +45,8 @@ jobs:
       with:
         context: ./frontend
         push: true
+        build-args: |
+          REACT_APP_API_BASE_URL=http://attendoo-backend-5.eastus.azurecontainer.io:5000
         tags: |
           kumarharsh001/attendoo:frontend-latest
           kumarharsh001/attendoo:frontend-${{ github.sha }}
