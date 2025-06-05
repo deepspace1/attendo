@@ -57,20 +57,21 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Deploy Backend to Azure Container Instances
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-        dns-name-label: attendoo-backend-${{ github.run_number }}
-        image: kumarharsh001/attendoo:backend-${{ github.sha }}
-        name: ${{ env.BACKEND_CONTAINER_NAME }}
-        location: 'East US'
-        environment-variables: |
-          MONGODB_URI=${{ secrets.MONGODB_URI }}
-          PORT=5000
-          NODE_ENV=production
-        ports: 5000
-        cpu: 1
-        memory: 1.5
+      run: |
+        az container create \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --name ${{ env.BACKEND_CONTAINER_NAME }} \
+          --image kumarharsh001/attendoo:backend-latest \
+          --dns-name-label attendoo-backend-${{ github.run_number }} \
+          --ports 5000 \
+          --os-type Linux \
+          --cpu 1 \
+          --memory 1.5 \
+          --environment-variables \
+            MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+            PORT=5000 \
+            NODE_ENV=production \
+          --restart-policy Always
 
     - name: Get Backend URL
       id: backend-url
@@ -84,19 +85,20 @@ jobs:
         echo "Backend URL: http://${BACKEND_FQDN}:5000"
 
     - name: Deploy Frontend to Azure Container Instances
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-        dns-name-label: attendoo-frontend-${{ github.run_number }}
-        image: kumarharsh001/attendoo:frontend-${{ github.sha }}
-        name: ${{ env.FRONTEND_CONTAINER_NAME }}
-        location: 'East US'
-        environment-variables: |
-          REACT_APP_API_BASE_URL=${{ steps.backend-url.outputs.backend_url }}
-          BACKEND_URL=${{ steps.backend-url.outputs.backend_url }}
-        ports: 80
-        cpu: 0.5
-        memory: 1
+      run: |
+        az container create \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --name ${{ env.FRONTEND_CONTAINER_NAME }} \
+          --image kumarharsh001/attendoo:frontend-latest \
+          --dns-name-label attendoo-frontend-${{ github.run_number }} \
+          --ports 80 \
+          --os-type Linux \
+          --cpu 0.5 \
+          --memory 1 \
+          --environment-variables \
+            REACT_APP_API_BASE_URL="${{ steps.backend-url.outputs.backend_url }}" \
+            BACKEND_URL="${{ steps.backend-url.outputs.backend_url }}" \
+          --restart-policy Always
 
     - name: Get Deployment URLs
       run: |
