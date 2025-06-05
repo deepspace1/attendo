@@ -135,3 +135,5 @@ jobs:
         echo "Frontend image: kumarharsh001/attendoo:frontend-${{ github.sha }}"
         echo "Latest tags: backend-latest, frontend-latest"
         echo "Ready for deployment to any cloud platform!"
+        echo ""
+        echo "🔄 Azure deployment will be triggered by azure-deploy.yml workflow"

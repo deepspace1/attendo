@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Backend Service
+  backend:
+    image: kumarharsh001/attendoo:backend-latest
+    container_name: attendoo-backend
+    environment:
+      - MONGODB_URI=mongodb+srv://harshkumar170604:ThisismongoDB1234@cluster0.kezwcrd.mongodb.net/attend?retryWrites=true&w=majority&appName=Cluster0
+      - PORT=5000
+      - NODE_ENV=production
+    ports:
+      - "5000:5000"
+    networks:
+      - attendoo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service
+  frontend:
+    image: kumarharsh001/attendoo:frontend-latest
+    container_name: attendoo-frontend
+    environment:
+      - REACT_APP_API_BASE_URL=http://backend:5000
+    ports:
+      - "80:80"
+    networks:
+      - attendoo-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Monitoring services (commented out for simplicity)
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - attendoo-network
+
+  # grafana:
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   ports:
+  #     - "3002:3000"
+  #   networks:
+  #     - attendoo-network
+
+networks:
+  attendoo-network:
+    driver: bridge
+    name: attendoo-network
