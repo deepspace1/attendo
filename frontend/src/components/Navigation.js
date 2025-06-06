@@ -34,12 +34,19 @@ function Navigation() {
             >
               Take Attendance
             </Nav.Link>
-            <Nav.Link 
-              as={Link} 
-              to="/view-attendance" 
-              className={location.pathname === '/view-attendance' ? 'active' : ''}
+            <Nav.Link
+              as={Link}
+              to="/view-records"
+              className={location.pathname === '/view-records' ? 'active' : ''}
             >
               View Records
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/admin"
+              className={location.pathname === '/admin' ? 'active' : ''}
+            >
+              🔧 Admin
             </Nav.Link>
             <Button variant="outline-primary" onClick={handleLogout} className="ms-3">
               Logout

@@ -5,11 +5,10 @@ const attendanceController = require('../controllers/attendanceController');
 // Debug route to check database contents
 router.get('/debug', async (req, res) => {
   try {
-    const Attendance = require('../models/Attendance');
-    const Student = require('../models/Student');
+    const AttendanceSession = require('../database-models/AttendanceSession');
     
     // Get all attendance records
-    const allAttendance = await Attendance.find()
+    const allAttendance = await AttendanceSession.find()
       .sort({ date: -1 });
     
     // Get the exact format of dates
@@ -40,11 +39,26 @@ router.get('/debug', async (req, res) => {
   }
 });
 
+// Dashboard stats for dashboard page
+router.get('/dashboard-stats', attendanceController.getDashboardStats);
+
 // Get suggestions for classes, subjects, and dates
 router.get('/suggestions', attendanceController.getSuggestions);
 
-// Get attendance records with filters
-router.get('/records', attendanceController.getAttendanceRecords);
+// Get attendance records with filters (old - class based)
+router.get('/records-old', attendanceController.getAttendanceRecords);
+
+// Get attendance records with new filters (department, section, subject)
+router.get('/records', attendanceController.getRecords);
+
+// Get subject-wise attendance (all students for one subject)
+router.get('/subject-wise', attendanceController.getSubjectWiseAttendance);
+
+// Get student-wise attendance (one student, all subjects)
+router.get('/student-wise', attendanceController.getStudentWiseAttendance);
+
+// Get class overview (all subjects for a class)
+router.get('/class-overview', attendanceController.getClassOverview);
 
 // Get detailed attendance record
 router.get('/records/:id', attendanceController.getAttendanceRecordDetails);

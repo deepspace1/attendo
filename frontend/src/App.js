@@ -4,7 +4,8 @@ import { Container } from 'react-bootstrap';
 import Navigation from './components/Navigation';
 import Dashboard from './pages/Dashboard';
 import TakeAttendance from './pages/TakeAttendance';
-import ViewAttendance from './pages/ViewAttendance';
+import ViewRecords from './pages/ViewRecords';
+import AdminDashboard from './pages/AdminDashboard';
 import TeacherLogin from './pages/TeacherLogin';
 import PrivateRoute from './components/PrivateRoute';
 import MobileScanner from './pages/MobileScanner';
@@ -52,10 +53,18 @@ function App() {
               }
             />
             <Route
-              path="/view-attendance"
+              path="/view-records"
               element={
                 <PrivateRoute>
-                  <ViewAttendance />
+                  <ViewRecords />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
                 </PrivateRoute>
               }
             />

@@ -14,4 +14,10 @@ router.post('/', studentController.addStudent);
 // Find student by barcode
 router.get('/barcode/:barcodeId', studentController.findByBarcode);
 
-module.exports = router; 
+// Get all departments
+router.get('/departments', studentController.getDepartments);
+
+// Get sections for a department
+router.get('/sections', studentController.getSections);
+
+module.exports = router;

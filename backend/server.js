@@ -78,6 +78,10 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/students', require('./routes/students'));
+app.use('/api/courses', require('./routes/courses'));
+app.use('/api/teachers', require('./routes/teachers'));
+app.use('/api/departments', require('./routes/departments'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/scan', require('./routes/scan'));
 app.use('/api/upload-scan', require('./routes/uploadScan'));

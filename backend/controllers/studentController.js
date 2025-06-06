@@ -1,19 +1,23 @@
-const Student = require('../models/Student');
+const Student = require('../database-models/Student');
 
-// Get all students
+// Get all students with filtering by department and section
 exports.getAllStudents = async (req, res) => {
     try {
-        const { class: className } = req.query;
+        const { department, section } = req.query;
         let query = {};
-        
-        // If class is provided, filter by class
-        if (className) {
-            // Use case-insensitive regex match for class
-            query = { class: { $regex: new RegExp(`^${className}$`, 'i') } };
+
+        // Filter by department if provided
+        if (department) {
+            query.department = { $regex: new RegExp(`^${department}$`, 'i') };
+        }
+
+        // Filter by section if provided
+        if (section) {
+            query.section = { $regex: new RegExp(`^${section}$`, 'i') };
         }
 
         console.log('Searching with query:', query);
-        
+
         // First check if we can connect to the database
         const count = await Student.countDocuments();
         console.log('Total students in database:', count);
@@ -26,7 +30,7 @@ exports.getAllStudents = async (req, res) => {
         res.json(students);
     } catch (error) {
         console.error('Error in getAllStudents:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: error.message,
             error: error.stack
         });
@@ -43,43 +47,91 @@ exports.getStudentsByClass = async (req, res) => {
     }
 };
 
-// Add new student
-exports.addStudent = async (req, res) => {
-    const student = new Student({
-        rollNumber: req.body.rollNumber,
-        name: req.body.name,
-        class: req.body.class,
-        barcodeId: req.body.barcodeId
-    });
+// Legacy add student function - removed (using new one below)
 
-    try {
-        const newStudent = await student.save();
-        res.status(201).json(newStudent);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// Find student by barcode (case-insensitive)
+// Find student by barcode (case-insensitive) - matches barcodeId field which contains 22***** format
 exports.findByBarcode = async (req, res) => {
     try {
+        console.log('Searching for barcode:', req.params.barcodeId);
+
+        // First try to find by barcodeId (which contains the 22***** format)
         const student = await Student.findOne({
             barcodeId: { $regex: new RegExp(`^${req.params.barcodeId}$`, 'i') }
         });
+
         if (student) {
+            console.log('Found student by barcodeId:', student.name);
             res.json(student);
             return;
         }
-        // If not found by barcodeId, try by rollNumber (case-insensitive)
-        const studentByRoll = await Student.findOne({
-            rollNumber: { $regex: new RegExp(`^${req.params.barcodeId}$`, 'i') }
-        });
-        if (studentByRoll) {
-            res.json(studentByRoll);
-        } else {
-            res.status(404).json({ message: 'Student not found' });
-        }
+
+        console.log('Student not found for barcode:', req.params.barcodeId);
+        res.status(404).json({ message: 'Student not found' });
+    } catch (error) {
+        console.error('Error in findByBarcode:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get all unique departments
+exports.getDepartments = async (req, res) => {
+    try {
+        const departments = await Student.distinct('department');
+        res.json(departments);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Get all unique sections for a department
+exports.getSections = async (req, res) => {
+    try {
+        const { department } = req.query;
+        let query = {};
+        if (department) {
+            query.department = department;
+        }
+        const sections = await Student.distinct('section', query);
+        res.json(sections);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Create new student (alias for addStudent)
+exports.addStudent = async (req, res) => {
+    try {
+        const studentData = req.body;
+
+        // Check if student already exists
+        const existingStudent = await Student.findOne({
+            $or: [
+                { rollNumber: studentData.rollNumber },
+                { barcodeId: studentData.barcodeId }
+            ]
+        });
+
+        if (existingStudent) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student with this USN or Barcode ID already exists'
+            });
+        }
+
+        const student = new Student(studentData);
+        const savedStudent = await student.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Student created successfully',
+            student: savedStudent
+        });
+    } catch (error) {
+        console.error('Error creating student:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error creating student',
+            error: error.message
+        });
     }
 };
